@@ -2,7 +2,7 @@ import { Response } from "express";
 import Url from "../models/url";
 import { AuthRequest } from "../middleware/authMiddleware";
 
-const genRandId = (length: number = 6): string => {
+const genRandId = (length: number = 6): string => {//BASE_URL
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 };
@@ -56,7 +56,7 @@ export const genNewtrimUrl = async (req: AuthRequest, res: Response): Promise<vo
         await newUrl.save();
         res.status(201).json({
             message: "Short URL created successfully.",
-            shortUrl: `${process.env.BASE_URL}/${trimId}`,
+            shortUrl: `${req.protocol}://${req.get("host")}/${trimId}`,
             redirectUrl,
         });
     } catch (error) {
