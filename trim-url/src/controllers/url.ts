@@ -2,7 +2,7 @@ import { Response } from "express";
 import Url from "../models/url";
 import { AuthRequest } from "../middleware/authMiddleware";
 
-const genRandId = (length: number = 6): string => {//BASE_URL
+const genRandId = (length: number = 6): string => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 };
