@@ -9,7 +9,7 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV || "development"}` });
 
 
 connectDB();
-const PORT = 8003;
+const PORT = process.env.PORT || 8003;
 
 const app = express();
 app.use(express.json())

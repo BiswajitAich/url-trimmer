@@ -5,7 +5,7 @@ import { verifyToken } from "./middleware/authentication";
 dotenv.config({ path: `.env.${process.env.NODE_ENV || "development"}` });
 
 const app = express()
-const PORT = 8001;
+const PORT = process.env.PORT || 8001;
 app.use(express.json())
 
 app.post("/qr",verifyToken ,(req: Request, res: Response) => {
