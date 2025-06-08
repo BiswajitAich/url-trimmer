@@ -1,0 +1,52 @@
+services:
+  auth-service:
+    build: ./auth-service
+    # image: biswajitaich/auth-service:latest
+    ports:
+      - "8003:8003"
+    env_file:
+      - ./auth-service/.env.development
+    networks:
+      - app-network
+
+  nytherra:
+    build: ./nytherra
+    # image: biswajitaich/nytherra:latest
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./nytherra/.env.development
+    depends_on:
+      - auth-service
+      - qr-code-composer
+      - trim-url
+    networks:
+      - app-network
+
+  qr-code-composer:
+    build: ./qr-code-composer
+    # image: biswajitaich/qr-code-composer:latest
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./qr-code-composer/.env.development
+    depends_on:
+      - auth-service
+    networks:
+      - app-network
+
+  trim-url:
+    build: ./trim-url
+    # image: biswajitaich/trim-url:latest
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./trim-url/.env.development
+    depends_on:
+      - auth-service
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

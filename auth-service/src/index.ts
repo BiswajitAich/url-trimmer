@@ -58,6 +58,9 @@ app.post("/login", async (req: Request, res: Response) => {
 app.post("/signup", async (req: Request, res: Response) => {
     const { username, email, password } = req.body;
     const SECRET_KEY = process.env.SECRET_KEY;
+    console.log("process.env.SECRET_KEY:", process.env.SECRET_KEY);
+    console.log("username, email, password", username, email, password);
+
     if (!username || !email || !password) {
         res.status(400).send(JSON.stringify({ "error": "Missing fields" }));
         return;
@@ -69,18 +72,23 @@ app.post("/signup", async (req: Request, res: Response) => {
         return;
     }
     try {
+        console.log("Checking existing users...");
         if (await User.findOne({ email })) {
+            console.log("Email already exists");
             res.status(409).send(JSON.stringify({ "error": "Email already registered" }));
             return;
         }
 
         if (await User.findOne({ username })) {
+            console.log("username already exists");
             res.status(409).send(JSON.stringify({ "error": "User Name already taken try another one!" }));
             return;
         }
+        console.log("Hashing password...");
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({ username, email, password: hashedPassword });
 
+        console.log("Generating token...");
         const token = jwt.sign({ id: user._id, email }, SECRET_KEY!, { expiresIn: "1h" });
         res.status(200).json({
             token,
@@ -92,6 +100,7 @@ app.post("/signup", async (req: Request, res: Response) => {
         });
 
     } catch (error) {
+        console.error("Signup error:", error);
         res.status(500).send(JSON.stringify({ "error": "Signup failed" }));
     }
 })

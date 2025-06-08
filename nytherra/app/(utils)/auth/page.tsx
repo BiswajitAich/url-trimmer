@@ -5,7 +5,7 @@ import isUserLoggedIn from './checkAuth';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 
-export default function AuthPage() {
+export default function AuthPage() {//Please verify your email first
   const [isSignIn, setIsSignIn] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,6 +13,60 @@ export default function AuthPage() {
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
+
+  const [otpSent, setOtpSent] = useState(false);
+  const [userOtp, setUserOtp] = useState('');
+  const [otpVerified, setOtpVerified] = useState(false);
+
+  // 1. Send OTP
+  const handleSendOtp = async () => {
+    setError(''); setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const body = await res.json();
+      console.log("handleSendOtp: ", body);
+
+      if (res.ok) {
+        setOtpSent(true);
+      } else {
+        setError(body.message || 'Failed to send OTP');
+      }
+    } catch {
+      setError('Network error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 2. Verify OTP
+  const handleVerifyOtp = async () => {
+    setError(''); setIsLoading(true);
+    try {
+      console.log('Verifying OTP payload:', { email, otp: userOtp });
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        body: JSON.stringify({ email, otp: userOtp }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const body = await res.json();
+      console.log("handleVerifyOtp:", body.data.verified);
+
+      if (res.ok && body.data.verified) {
+        setOtpVerified(true);
+      } else {
+        setError(body.message || 'Invalid OTP');
+      }
+    } catch {
+      setError('Network error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isUserLoggedIn()) { return; }
     window.location.href = '/';
@@ -21,7 +75,10 @@ export default function AuthPage() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
+    if (!otpVerified && !isSignIn) {
+      setError('Please verify your email first');
+      return;
+    }
     // Form validation
     if (!email || !password) {
       setError('Please fill in all required fields');
@@ -85,16 +142,16 @@ export default function AuthPage() {
       <Header />
       <div className="min-h-screen bg-gradient-to-br from-black via-indigo-900 to-purple-950 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          {/* Logo and Nav */}
+          {/* Logo */}
           <div className="text-center mb-6">
-            <Link href="/" className="inline-block">
+            <Link href="/">
               <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-300">
                 Nytherra
               </h1>
             </Link>
           </div>
 
-          {/* Auth Card */}
+          {/* Card */}
           <div className="bg-white/10 backdrop-blur-md shadow-xl rounded-2xl p-8 border border-indigo-500">
             <h2 className="text-2xl font-bold text-white mb-6 text-center">
               {isSignIn ? 'Sign in to your account' : 'Create your account'}
@@ -114,55 +171,96 @@ export default function AuthPage() {
                   </label>
                   <input
                     id="name"
-                    name="name"
                     type="text"
                     value={name}
+                    onChange={e => setName(e.target.value)}
                     maxLength={20}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full p-3 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-                    placeholder="Enter Your name"
+                    className="w-full p-3 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    placeholder="Enter your name"
                   />
                 </div>
               )}
 
+              {/* Email + OTP */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-indigo-200 mb-1">
                   Email address
                 </label>
                 <input
                   id="email"
-                  name="email"
                   type="email"
-                  maxLength={50}
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                  onChange={e => setEmail(e.target.value)}
+                  className="w-full p-3 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   placeholder="you@example.com"
                 />
+
+                {!isSignIn && (
+                  <div className="mt-3 space-y-2">
+                    {!otpSent && (
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        disabled={!email || isLoading}
+                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg transition"
+                      >
+                        {isLoading ? 'Sending OTP…' : 'Send OTP'}
+                      </button>
+                    )}
+
+                    {otpSent && !otpVerified && (
+                      <>
+                        <input
+                          type="text"
+                          value={userOtp}
+                          onChange={e => setUserOtp(e.target.value)}
+                          placeholder="Enter OTP"
+                          className="w-full p-3 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          disabled={!userOtp || isLoading}
+                          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg transition"
+                        >
+                          {isLoading ? 'Verifying…' : 'Verify OTP'}
+                        </button>
+                      </>
+                    )}
+
+                    {otpVerified && (
+                      <div className="text-green-400 font-medium">
+                        Email verified ✅
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
+              {/* Password */}
               <div>
-                <div className="flex items-center justify-bettrimn">
+                <div className="flex justify-between items-center">
                   <label htmlFor="password" className="block text-sm font-medium text-indigo-200 mb-1">
                     Password
                   </label>
+                  {/*
                   {isSignIn && (
-                    <Link href="/forgot-password" className="text-sm text-indigo-300 hover:text-white transition">
+                    <Link href="/forgot-password" className="text-sm text-indigo-300 hover:text-white">
                       Forgot password?
                     </Link>
                   )}
+                    */}
                 </div>
                 <input
                   id="password"
-                  name="password"
                   type="password"
                   required
                   minLength={4}
                   maxLength={10}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full p-3 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   placeholder="••••••••"
                 />
               </div>
@@ -174,95 +272,54 @@ export default function AuthPage() {
                   </label>
                   <input
                     id="confirmPassword"
-                    name="confirmPassword"
                     type="password"
                     required
                     minLength={4}
                     maxLength={10}
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full p-3 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    className="w-full p-3 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     placeholder="••••••••"
                   />
                 </div>
               )}
 
-              <div>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-3 px-4 rounded-lg font-semibold shadow-md transition-all flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    isSignIn ? 'Sign in' : 'Create account'
-                  )}
-                </button>
-              </div>
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isLoading || (!isSignIn && !otpVerified)}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center"
+              >
+                {isLoading ? (
+                  <svg className="animate-spin h-5 w-5 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                ) : (
+                  isSignIn ? 'Sign in' : 'Create account'
+                )}
+              </button>
             </form>
 
+            {/* Toggle */}
             <div className="mt-6 text-center">
               <p className="text-sm text-indigo-200">
-                {isSignIn ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  onClick={toggleMode}
-                  className="text-indigo-300 hover:text-white font-medium transition"
-                >
+                {isSignIn ? "Don't have an account?" : "Already have an account?"}{' '}
+                <button onClick={toggleMode} className="text-indigo-300 hover:text-white font-medium">
                   {isSignIn ? 'Sign up' : 'Sign in'}
                 </button>
               </p>
             </div>
-
-            {/* {isSignIn && (
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-indigo-500/30"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-indigo-900/50 text-indigo-300">Or continue with</span>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  className="w-full flex justify-center py-2 px-4 border border-indigo-500/30 rounded-md shadow-sm bg-white/5 text-sm font-medium text-white hover:bg-white/10 transition"
-                >
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.498 0 2.866.549 3.921 1.453l2.814-2.814A9.969 9.969 0 0012.545 2C7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c8.396 0 10.249-7.85 9.426-11.748l-9.426-.013z" />
-                  </svg>
-                </button>
-
-                <button
-                  type="button"
-                  className="w-full flex justify-center py-2 px-4 border border-indigo-500/30 rounded-md shadow-sm bg-white/5 text-sm font-medium text-white hover:bg-white/10 transition"
-                >
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M13.5 1A1.5 1.5 0 0012 2.5V15a1.5 1.5 0 001.5 1.5h7A1.5 1.5 0 0022 15V4.5A1.5 1.5 0 0020.5 3h-5.379a1.5 1.5 0 00-1.06.44L13.5 4z"></path>
-                    <path d="M2 4.5A1.5 1.5 0 013.5 3h5.379a1.5 1.5 0 011.06.44L10.5 4 9.939 3.44a1.5 1.5 0 00-1.06-.44H3.5A1.5 1.5 0 002 4.5v10.15l3.372-3.372a.75.75 0 011.061 0l.203.203a.75.75 0 001.06 0l4.244-4.243a.75.75 0 011.06 0l6 6V4.5A1.5 1.5 0 0017.5 3h-5.379a1.5 1.5 0 00-1.06.44L10.5 4l-.561-.56a1.5 1.5 0 00-1.06-.44H3.5A1.5 1.5 0 002 4.5v6.879l3.372-3.372a.75.75 0 011.061 0l.203.203a.75.75 0 001.06 0l4.244-4.243a.75.75 0 011.06 0l6 6v2.121l-6-6a.75.75 0 00-1.06 0l-4.244 4.243a.75.75 0 01-1.06 0l-.203-.203a.75.75 0 00-1.061 0L2 13.621V15a1.5 1.5 0 001.5 1.5h2.25a.75.75 0 110 1.5H3.5A3 3 0 01.5 15V4.5A3 3 0 013.5 2h5.25a3 3 0 012.122.879L11.5 3.5l.628-.628A3 3 0 0114.25 2h5.25a3 3 0 013 3V15a3 3 0 01-3 3h-3.75a.75.75 0 010-1.5h3.75A1.5 1.5 0 0020.5 15V7.621l-5.5-5.5V15a1.5 1.5 0 001.5 1.5H17a.75.75 0 110 1.5h-.75A3 3 0 0113.5 15V4.5c0-.385.056-.758.16-1.109a3 3 0 01-.16-1.391V2z"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )} */}
           </div>
 
-          {/* Terms */}
+          {/* Terms Sign in to your account*/}
           <div className="mt-6 text-center text-xs text-indigo-200/70">
             By signing up, you agree to our{' '}
-            <Link href="/terms" className="text-indigo-300 hover:text-white transition">
+            <Link href="/" className="text-indigo-300 hover:text-white">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" className="text-indigo-300 hover:text-white transition">
+            <Link href="/" className="text-indigo-300 hover:text-white">
               Privacy Policy
             </Link>
           </div>

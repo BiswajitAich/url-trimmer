@@ -3,6 +3,7 @@ import { useState } from 'react';
 import isUserLoggedIn from '../auth/checkAuth';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
+import Link from 'next/link';
 
 interface Resp {
     message: string;
@@ -117,9 +118,9 @@ const trimUrl = () => {
                         <div className="text-sm space-y-1">
                             <p>
                                 <span className="font-medium">Original URL:</span>{' '}
-                                <a href={dataResp.redirectUrl} className="text-blue-200 underline" target="_blank">
+                                <Link href={dataResp.redirectUrl} className="text-blue-200 underline" target="_blank">
                                     {dataResp.redirectUrl}
-                                </a>
+                                </Link>
                             </p>
 
                             <div className="flex items-center gap-2">

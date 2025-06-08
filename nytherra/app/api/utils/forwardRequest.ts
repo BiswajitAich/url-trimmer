@@ -1,6 +1,10 @@
 export async function forwardRequest(req: Request, endpoint: string) {
     try {
+        console.log("${process.env.AUTH_SERVICE_URL}/${endpoint}:",`${process.env.AUTH_SERVICE_URL}/${endpoint}`);
         const data = await req.json();
+        console.log("req:", req);
+        console.log("data:", data);
+        
         const resp = await fetch(`${process.env.AUTH_SERVICE_URL}/${endpoint}`, {
             method: 'POST',
             body: JSON.stringify(data),

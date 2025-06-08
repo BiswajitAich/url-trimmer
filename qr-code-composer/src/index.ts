@@ -8,7 +8,7 @@ const app = express()
 const PORT = process.env.PORT || 8001;
 app.use(express.json())
 
-app.post("/qr",verifyToken ,(req: Request, res: Response) => {
+app.post("/qr", verifyToken, (req: Request, res: Response) => {
 
     const { url, html, header, color } = req.body as {
         url?: string,

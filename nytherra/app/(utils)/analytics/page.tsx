@@ -33,6 +33,18 @@ const Analytics = () => {
     const [disabled, setDisabled] = useState<boolean>(false);
     const [countdown, setCountdown] = useState<number>(0);
     const trimUrlEnv = process.env.NEXT_PUBLIC_TRIM_URL;
+
+    // Add this at the top of your component, right after the imports
+    useEffect(() => {
+        console.log("=== Environment Variable Debug ===");
+        console.log("NODE_ENV:", process.env.NODE_ENV);
+        console.log("All NEXT_PUBLIC vars:", Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC_')));
+        console.log("NEXT_PUBLIC_TRIM_URL:", process.env.NEXT_PUBLIC_TRIM_URL);
+        console.log("Type of NEXT_PUBLIC_TRIM_URL:", typeof process.env.NEXT_PUBLIC_TRIM_URL);
+        console.log("trimUrlEnv:", trimUrlEnv);
+        console.log("Type of trimUrlEnv:", typeof trimUrlEnv);
+    }, []);
+
     useEffect(() => {
         if (!isUserLoggedIn()) {
             window.location.href = '/auth';
