@@ -20,7 +20,7 @@ A simple and efficient URL trimming service built to shorten long URLs into comp
 ## 📁 Directory Structure
 
 - auth-service-------> Simple authentication system using mongodb 
-- nyhherra ----------> Frontend build with NextJs
+- nytherra ----------> Frontend build with NextJs
 - qr-code-composer->   Simple QR generator
 - trim-url------------> Backend for redirecting and analysing the visits
 
