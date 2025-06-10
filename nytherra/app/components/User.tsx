@@ -2,7 +2,6 @@
 
 import { CircleUserRound, LogIn, LogOut, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import isUserLoggedIn from "../(utils)/auth/checkAuth";
 
 const User = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -10,10 +9,19 @@ const User = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const checkAuth = () => {
+        const checkAuth = async () => {
             try {
-                const loggedIn = isUserLoggedIn();
-                setIsLoggedIn(loggedIn);
+                const response = await fetch('/api/auth/check', {
+                    method: 'GET',
+                    credentials: 'include' 
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    setIsLoggedIn(data.authenticated);
+                } else {
+                    setIsLoggedIn(false);
+                }
             } catch (error) {
                 console.error("Error checking auth status:", error);
                 setIsLoggedIn(false);
@@ -29,13 +37,22 @@ const User = () => {
         setIsOpen(prev => !prev);
     };
 
-    const handleLogOut = () => {
+    const handleLogOut = async () => {
         try {
-            localStorage.removeItem('token');
-            setIsLoggedIn(false);
-            setIsOpen(false);
+            const response = await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include' 
+            });
+            
+            if (response.ok) {
+                setIsLoggedIn(false);
+                setIsOpen(false);
+                window.location.href = '/';
+            } else {
+                console.error('Logout failed');
+            }
         } catch (error) {
-            console.warn("Error during logout:", error);
+            console.error("Error during logout:", error);
         }
     };
 

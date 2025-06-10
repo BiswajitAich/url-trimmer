@@ -67,10 +67,10 @@ export default function AuthPage() {//Please verify your email first
     }
   };
 
-  useEffect(() => {
-    if (!isUserLoggedIn()) { return; }
-    window.location.href = '/';
-  }, [])
+  // useEffect(() => {
+  //   if (!isUserLoggedIn()) { return; }
+  //   window.location.href = '/';
+  // }, [])
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setError('');

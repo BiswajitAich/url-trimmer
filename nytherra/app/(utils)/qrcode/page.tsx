@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import isUserLoggedIn from '../auth/checkAuth';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
@@ -23,33 +23,21 @@ const QrCode = () => {
     const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
     const [copySuccess, setCopySuccess] = useState(false);
 
-    useEffect(() => {
-        if (!isUserLoggedIn()) {
-            window.location.href = '/auth';
-        }
-    }, []);
-
     const generateQRCode = async () => {
         if (!url.trim()) {
             setErrorMessage('Please enter a URL');
             return;
         }
-        // if(!url.startsWith('https://')){
-        //     setErrorMessage('Please enter a valid URL');
-        //     return;
-        // }
 
         setIsGenerating(true);
         setErrorMessage('');
         setCopySuccess(false);
 
         try {
-            const token = localStorage.getItem('token');
             const res = await fetch('/api/secure/generateQr', {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    'Authorization': token ? `Bearer ${token}` : ''
                 },
                 body: JSON.stringify({
                     url: url,
@@ -69,7 +57,6 @@ const QrCode = () => {
 
             if (responseData.data.status === 'ok' && responseData.data) {
                 if (responseData.data.type === 'img') {
-                    // Handle image data
                     setQrCodeData(responseData.data.data);
                 }
             } else {

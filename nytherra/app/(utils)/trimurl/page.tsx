@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import isUserLoggedIn from '../auth/checkAuth';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import Link from 'next/link';
@@ -24,12 +23,6 @@ const trimUrl = () => {
         setLoading(true);
         setError('');
         setCopied(false);
-        const token = localStorage.getItem('token');
-
-        if (!isUserLoggedIn() || !token) {
-            window.location.href = '/auth';
-            return;
-        }
 
         try {
             const res = await fetch('./api/secure/trimurl', {
@@ -40,7 +33,6 @@ const trimUrl = () => {
                 }),
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
                 }
             });
 

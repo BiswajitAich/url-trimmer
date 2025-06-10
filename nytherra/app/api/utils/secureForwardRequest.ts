@@ -7,8 +7,14 @@ export async function secureForwardRequest(
     endpoint?: string
 ) {
     try {
-        const authHeader = req.headers.get('Authorization');
-        const token = authHeader?.split(' ')[1];
+        const token = req.cookies.get('token')?.value;
+        if (!token) {
+            return new NextResponse(JSON.stringify({
+                data: null,
+                status: 'notok',
+                error: 'No authentication token found'
+            }), { status: 401 });
+        }
         const data = method === 'POST' ? await req.json() : null;
         const ENV_URL = process.env[baseUrlEnvKey];
 
@@ -28,7 +34,7 @@ export async function secureForwardRequest(
         try {
             result = await resp.json();
         } catch (error) {
-            console.log("secureForwardRequest result:",result);
+            console.log("secureForwardRequest result:", result);
             console.log("await resp.json() " + (error as Error).message);
         }
         return new NextResponse(JSON.stringify({
